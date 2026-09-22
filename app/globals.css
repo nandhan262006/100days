@@ -1,26 +1,181 @@
 @import "tailwindcss";
 
+@theme {
+  --color-ink: #080808;
+  --color-ink-2: #0b0b0f;
+  --color-card: #111116;
+  --color-card-2: #16161d;
+  --color-card-3: #1c1c25;
+  --color-line: rgba(255, 255, 255, 0.08);
+  --color-line-2: rgba(255, 255, 255, 0.14);
+  --color-lime: #c8ff4d;
+  --color-lime-soft: rgba(200, 255, 77, 0.14);
+  --color-violet: #a78bfa;
+  --color-violet-soft: rgba(167, 139, 250, 0.14);
+  --color-orange: #fb923c;
+  --color-orange-soft: rgba(251, 146, 60, 0.14);
+  --color-mist: #8b8b96;
+  --color-frost: #e8e8ee;
+
+  --font-display: var(--font-display-sans);
+  --font-sans: var(--font-body-sans);
+  --font-mono: var(--font-mono-sans);
+
+  --radius-xl2: 1.25rem;
+
+  --shadow-glow-lime: 0 0 0 1px rgba(200, 255, 77, 0.28), 0 8px 40px -8px rgba(200, 255, 77, 0.35);
+  --shadow-glow-violet: 0 0 0 1px rgba(167, 139, 250, 0.3), 0 8px 40px -8px rgba(167, 139, 250, 0.4);
+  --shadow-glow-orange: 0 0 0 1px rgba(251, 146, 60, 0.3), 0 8px 40px -8px rgba(251, 146, 60, 0.4);
+  --shadow-card: 0 20px 60px -24px rgba(0, 0, 0, 0.8), 0 1px 0 0 rgba(255, 255, 255, 0.04) inset;
+
+  --animate-float: float 7s ease-in-out infinite;
+  --animate-pulse-glow: pulse-glow 2.6s ease-in-out infinite;
+  --animate-shimmer: shimmer 2.4s linear infinite;
+  --animate-spin-slow: spin 14s linear infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-12px); }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { opacity: 0.55; }
+  50% { opacity: 1; }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  color-scheme: dark;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  scroll-behavior: smooth;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: #080808;
+  color: #e8e8ee;
+  font-family: var(--font-body-sans), ui-sans-serif, system-ui, sans-serif;
+  min-height: 100dvh;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
 }
+
+/* Layered animated backdrop */
+.challenge-bg {
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  background:
+    radial-gradient(1100px 700px at 85% -10%, rgba(167, 139, 250, 0.13), transparent 60%),
+    radial-gradient(1000px 640px at -10% 20%, rgba(200, 255, 77, 0.07), transparent 55%),
+    radial-gradient(900px 640px at 55% 115%, rgba(251, 146, 60, 0.09), transparent 55%),
+    linear-gradient(180deg, #0b0b0f 0%, #080808 100%);
+}
+
+.challenge-grid {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.022) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.022) 1px, transparent 1px);
+  background-size: 56px 56px;
+  mask-image: radial-gradient(ellipse 90% 70% at 50% 0%, black 30%, transparent 75%);
+}
+
+/* Glass card */
+.glass {
+  position: relative;
+  border-radius: 1.1rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.012));
+  backdrop-filter: blur(14px);
+  box-shadow: 0 20px 60px -28px rgba(0, 0, 0, 0.85);
+}
+
+.glass-hover {
+  transition: border-color 0.25s ease, transform 0.25s ease, box-shadow 0.25s ease;
+}
+.glass-hover:hover {
+  border-color: rgba(255, 255, 255, 0.18);
+  transform: translateY(-2px);
+  box-shadow: 0 28px 70px -28px rgba(0, 0, 0, 0.95);
+}
+
+.glow-lime { box-shadow: var(--shadow-glow-lime); }
+.glow-violet { box-shadow: var(--shadow-glow-violet); }
+.glow-orange { box-shadow: var(--shadow-glow-orange); }
+
+.text-glow-lime { text-shadow: 0 0 26px rgba(200, 255, 77, 0.55); }
+.text-glow-violet { text-shadow: 0 0 26px rgba(167, 139, 250, 0.55); }
+.text-glow-orange { text-shadow: 0 0 26px rgba(251, 146, 60, 0.55); }
+.text-glow-white { text-shadow: 0 0 30px rgba(255, 255, 255, 0.35); }
+
+.gradient-text {
+  background: linear-gradient(92deg, #c8ff4d 0%, #eaffa8 35%, #ffffff 55%, #a78bfa 85%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.btn-lime {
+  background: linear-gradient(180deg, #d6ff66, #b3f331);
+  color: #0b0b0f;
+  font-weight: 800;
+  box-shadow: 0 10px 34px -10px rgba(200, 255, 77, 0.7);
+  transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+}
+.btn-lime:hover { transform: translateY(-1px); filter: brightness(1.05); }
+.btn-lime:active { transform: translateY(0) scale(0.98); }
+.btn-lime:disabled { opacity: 0.5; filter: grayscale(0.6); cursor: not-allowed; }
+
+.btn-ghost {
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.05);
+  color: #e8e8ee;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+.btn-ghost:hover { background: rgba(255, 255, 255, 0.09); border-color: rgba(255, 255, 255, 0.24); }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: #0b0b0f; }
+::-webkit-scrollbar-thumb { background: #23232c; border-radius: 999px; border: 2px solid #0b0b0f; }
+::-webkit-scrollbar-thumb:hover { background: #33333e; }
+
+::selection { background: rgba(200, 255, 77, 0.28); color: #fff; }
+
+/* Focus */
+:focus-visible {
+  outline: 2px solid rgba(200, 255, 77, 0.6);
+  outline-offset: 2px;
+}
+
+input, select, textarea {
+  color-scheme: dark;
+}
+input::placeholder, textarea::placeholder {
+  color: #5b5b66;
+}
+
+/* Kit cards for the journey */
+.timeline-rail::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  transform: translateX(-50%);
+  background: linear-gradient(180deg, transparent, rgba(200, 255, 77, 0.35), rgba(167, 139, 250, 0.35), transparent);
+}
+
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }

@@ -1,0 +1,65 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model Setting {
+  key   String @id
+  value String
+}
+
+model User {
+  id        String               @id @default(cuid())
+  slug      String               @unique
+  name      String
+  emoji     String
+  accent    String
+  // scrypt hash in "salt:hash" hex format. Null = password-less (backwards compat).
+  passwordHash String?
+  createdAt DateTime             @default(now())
+  days      Day[]
+  unlocks   AchievementUnlock[]
+}
+
+model Day {
+  id           String   @id @default(cuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  dayNumber    Int
+  date         DateTime
+  junk         Boolean  @default(false)
+  move         Boolean  @default(false)
+  study        Boolean  @default(false)
+  junkAt       DateTime?
+  moveAt       DateTime?
+  studyAt      DateTime?
+  exerciseType String?
+  exerciseMin  Int?
+  steps        Int?
+  subject      String?
+  studyMin     Int?
+  learned      String?
+  xp           Int      @default(0)
+  isPerfect    Boolean  @default(false)
+  isMissed     Boolean  @default(false)
+  submittedAt  DateTime?
+
+  @@unique([userId, dayNumber])
+  @@index([date])
+  @@index([userId])
+}
+
+model AchievementUnlock {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  achievement String
+  unlockedAt  DateTime @default(now())
+
+  @@unique([userId, achievement])
+  @@index([userId])
+}

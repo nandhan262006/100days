@@ -1,36 +1,54 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# The 100-Day Trio Challenge
 
-## Getting Started
+100 days. 3 people. Zero excuses. A private fitness × study × gaming tracker for Lekhana × Akshaya × Nandhan (Sep 22 — Dec 30, 2026, finale Dec 31).
 
-First, run the development server:
+Stack: Next.js 16 + React 19 + Tailwind v4 + Prisma + PostgreSQL 16.
+
+## Setup
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+cp .env.example .env   # set DATABASE_URL to your Postgres
+npx prisma migrate dev # or: npx prisma db push
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Seed (demo data)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+npx tsx prisma/seed.ts        # seeds as-of day 48
+SEED_DAY=20 npx tsx prisma/seed.ts  # seeds as-of any day 1..100
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Seed creates the trio, deterministic day history with forced perfect-streak windows, achievement unlocks, and `Setting.currentDay` + `Setting.prevStandings`.
 
-## Learn More
+## Run
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+npm run dev    # http://localhost:3000
+npm run build
+npm run lint
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Login: pick your fighter at `/login` + enter your password (cookie `trio_user`). Passwords: `leki` / `akki` / `nandhi` (override at seed time with `PW_LEKHANA` / `PW_AKSHAYA` / `PW_NANDHAN`). Stored as scrypt hashes in `User.passwordHash` — set/reset on an existing DB with `npx tsx prisma/set-passwords.ts`. Switching profiles from the in-app menu also requires the password.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Demo vs live day mode
 
-## Deploy on Vercel
+- The app's "today" is **not** `new Date()` — it's `Setting.currentDay` in Postgres (`lib/data.ts:getCurrentDay`).
+- Demo: set it via seed (`SEED_DAY=48`) or `setCurrentDay(day)` / update `Setting` to `1..100` to time-travel the dashboard, calendar, battle, journey and finale.
+- Live: set `currentDay` to the real day number for Sep 22 → Dec 30 (`engine.daysElapsed()` fallback is used when the setting is missing).
+- `prevStandings` snapshot drives rank-change deltas on the dashboard + leaderboard.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Routes
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- `/` dashboard + mission-submit (confetti / level-up / perfect-day / achievements)
+- `/leaderboard` overall / week / month / streak / perfect tabs
+- `/person/[slug]` level ring + tier, streaks, per-mission bars, recent activity
+- `/calendar` Sep–Dec grid (perfect / partial / missed / future) + day-details modal
+- `/journey` 6 chapters, scroll-illuminated timeline
+- `/achievements` trophy case, locked = grayscale + progress bars
+- `/battle` current-week live XP bars + past-week winners
+- `/finale` Dec 31 countdown + final-sprint standings + lore
+
+## DB decision
+
+Kept **PostgreSQL + Prisma** (local, seeded, everything works). A pasted Turso/libsql token was never stored or committed — migrating would require the libsql adapter + SQLite-compatible schema + re-seed.
