@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { AchievementsClient } from "./achievements-client";
 import { getActiveProfile } from "@/lib/session";
-import { getCurrentDay, getAllUsersWithStats, loadUserWithStats } from "@/lib/data";
+import { getCurrentDay, getAllUsersWithStats } from "@/lib/data";
 import { prisma } from "@/lib/prisma";
 import { ACHIEVEMENTS, evaluateAchievements } from "@/lib/achievements";
 
@@ -12,14 +12,15 @@ export default async function AchievementsPage() {
   if (!profile) redirect("/login");
 
   const currentDay = await getCurrentDay();
-  const meRow = await prisma.user.findUnique({ where: { slug: profile.slug } });
-  if (!meRow) redirect("/login");
-  const me = await loadUserWithStats(meRow, currentDay);
+  const [all, unlockRows] = await Promise.all([
+    getAllUsersWithStats(currentDay),
+    prisma.achievementUnlock.findMany({ where: { userId: profile.id } }),
+  ]);
+  const me = all.find((u) => u.user.slug === profile.slug);
+  if (!me) redirect("/login");
   const evals = evaluateAchievements(me.rawDays, currentDay);
-  const unlockRows = await prisma.achievementUnlock.findMany({ where: { userId: meRow.id } });
   const unlockedSet = new Set(unlockRows.map((u) => u.achievement));
 
-  const all = await getAllUsersWithStats(currentDay);
   const trioCounts = new Map<string, number>();
   for (const u of all) {
     const ev = evaluateAchievements(u.rawDays, currentDay);

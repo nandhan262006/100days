@@ -24,7 +24,18 @@ export default async function PersonPage({ params }: { params: Promise<{ slug: s
   if (!target) notFound();
 
   const currentDay = await getCurrentDay();
-  const loaded = await loadUserWithStats(target, currentDay);
+  const [loaded, unlockRows, recent] = await Promise.all([
+    loadUserWithStats(target, currentDay),
+    prisma.achievementUnlock.findMany({
+      where: { userId: target.id },
+      orderBy: { unlockedAt: "desc" },
+    }),
+    prisma.day.findMany({
+      where: { userId: target.id, dayNumber: { lte: currentDay } },
+      orderBy: { dayNumber: "desc" },
+      take: 14,
+    }),
+  ]);
   const { stats } = loaded;
   const isMe = active.slug === slug;
 
@@ -34,17 +45,7 @@ export default async function PersonPage({ params }: { params: Promise<{ slug: s
   const color = levelColor(level);
 
   const evals = evaluateAchievements(loaded.rawDays, currentDay);
-  const unlockRows = await prisma.achievementUnlock.findMany({
-    where: { userId: target.id },
-    orderBy: { unlockedAt: "desc" },
-  });
   const unlockedCount = evals.filter((e) => e.unlocked).length;
-
-  const recent = await prisma.day.findMany({
-    where: { userId: target.id, dayNumber: { lte: currentDay } },
-    orderBy: { dayNumber: "desc" },
-    take: 14,
-  });
 
   const missionStats = [
     { key: "junk", emoji: "🥗", label: "CLEAN FUEL", days: stats.junkDays, rate: stats.junkRate, tone: "lime" as const },

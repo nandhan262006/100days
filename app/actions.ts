@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { verifyPassword } from "@/lib/auth";
 import { ACTIVE_USER_COOKIE, SOUND_COOKIE, getActiveProfile, setActiveSession } from "@/lib/session";
-import { getCurrentDay, loadUserWithStats, getPrevStandingsSnapshot, setPrevStandings } from "@/lib/data";
+import { getCurrentDay, getAllUsersWithStats, getPrevStandingsSnapshot, setPrevStandings } from "@/lib/data";
 import { evaluateAchievements, ACHIEVEMENT_BY_ID } from "@/lib/achievements";
 import { levelForXp } from "@/lib/levels";
 import { computeStats, MISSIONS } from "@/lib/stats";
@@ -90,11 +90,11 @@ export async function submitMission(
   }
 
   const currentDay = await getCurrentDay();
-  const me = await loadUserWithStats(profile, currentDay);
-  const levelBefore = levelForXp(me.stats.totalXp);
 
-  const allBefore = await loadAllRanked(currentDay);
-  const rankBefore = Math.max(1, allBefore.findIndex((u) => u.slug === profile.slug) + 1);
+  const allBefore = await getAllUsersWithStats(currentDay);
+  const meXp = allBefore.find((u) => u.user.slug === profile.slug)?.stats.totalXp ?? 0;
+  const levelBefore = levelForXp(meXp);
+  const rankBefore = Math.max(1, allBefore.findIndex((u) => u.user.slug === profile.slug) + 1);
 
   const key = mission as "junk" | "move" | "study";
   const complete = action === "complete";
@@ -224,15 +224,15 @@ export async function submitMission(
   });
 
   if (!txResult) {
-    return EMPTY_RESULT(mission, "LOCKED", me.stats.totalXp);
+    return EMPTY_RESULT(mission, "LOCKED", meXp);
   }
 
   const { saved, records, newlyUnlocked } = txResult;
   const statsAfter = computeStats(records, currentDay);
   const xpDelta = complete ? 100 : 0;
 
-  const allAfter = await loadAllRanked(currentDay);
-  const rankAfter = Math.max(1, allAfter.findIndex((u) => u.slug === profile.slug) + 1);
+  const allAfter = await getAllUsersWithStats(currentDay);
+  const rankAfter = Math.max(1, allAfter.findIndex((u) => u.user.slug === profile.slug) + 1);
   // Snapshot the standings as of the first submit of each day so rank deltas
   // on the dashboard + leaderboard read "since the day started" instead of
   // being clobbered by every subsequent submit by anyone.
@@ -240,7 +240,7 @@ export async function submitMission(
   if (!snapshot || snapshot.day !== currentDay) {
     await setPrevStandings(
       currentDay,
-      allBefore.map((u, i) => ({ slug: u.slug, rank: i + 1 })),
+      allBefore.map((u, i) => ({ slug: u.user.slug, rank: i + 1 })),
     );
   }
 
@@ -266,12 +266,6 @@ export async function submitMission(
     rankBefore,
     rankAfter,
   };
-}
-
-async function loadAllRanked(currentDay: number) {
-  const users = await prisma.user.findMany({ orderBy: { createdAt: "asc" } });
-  const rows = await Promise.all(users.map((u) => loadUserWithStats(u, currentDay)));
-  return rows.map((r) => ({ slug: r.user.slug, xp: r.stats.totalXp })).sort((a, b) => b.xp - a.xp);
 }
 
 function decisionAt(day: { junkAt: Date | null; moveAt: Date | null; studyAt: Date | null }, key: string): Date | null {

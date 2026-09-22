@@ -11,13 +11,25 @@ export type UserProfile = {
 };
 
 /** App-wide challenge "today". Stored in DB so the group can jump between demo and live time. */
+// Turso queries are HTTP round trips (~0.5-1.5s from serverless regions);
+// cache the operator-controlled "today" for a short window so every render
+// and action doesn't pay a round trip for it.
+let currentDayCache: { value: number; expires: number } | null = null;
+const CURRENT_DAY_TTL_MS = 30_000;
+
 export async function getCurrentDay(): Promise<number> {
-  const setting = await prisma.setting.findUnique({ where: { key: "currentDay" } });
-  if (setting && /^\d+$/.test(setting.value.trim())) {
-    const v = parseInt(setting.value.trim(), 10);
-    return Math.max(1, Math.min(100, v));
+  if (currentDayCache && currentDayCache.expires > Date.now()) {
+    return currentDayCache.value;
   }
-  return daysElapsed(new Date());
+  const setting = await prisma.setting.findUnique({ where: { key: "currentDay" } });
+  let value: number;
+  if (setting && /^\d+$/.test(setting.value.trim())) {
+    value = Math.max(1, Math.min(100, parseInt(setting.value.trim(), 10)));
+  } else {
+    value = daysElapsed(new Date());
+  }
+  currentDayCache = { value, expires: Date.now() + CURRENT_DAY_TTL_MS };
+  return value;
 }
 
 /** Operator control: jump the app-wide "today" between 1 and 100. */
@@ -28,6 +40,7 @@ export async function setCurrentDay(day: number): Promise<void> {
     create: { key: "currentDay", value: String(v) },
     update: { value: String(v) },
   });
+  currentDayCache = { value: v, expires: Date.now() + CURRENT_DAY_TTL_MS };
 }
 
 export async function getSetting(key: string): Promise<string | null> {
@@ -79,8 +92,40 @@ export async function loadUserWithStats(
 }
 
 export async function getAllUsersWithStats(currentDay: number): Promise<UserWithStats[]> {
-  const users = await prisma.user.findMany({ orderBy: { createdAt: "asc" } });
-  const out = await Promise.all(users.map((u) => loadUserWithStats(u, currentDay)));
+  // Two queries total: one for users, one for every day row. Stats are
+  // computed in JS — per-user round trips are too slow on Turso's HTTP
+  // transport from serverless regions.
+  const [users, rows] = await Promise.all([
+    prisma.user.findMany({ orderBy: { createdAt: "asc" } }),
+    prisma.day.findMany({
+      select: { userId: true, dayNumber: true, junk: true, move: true, study: true, xp: true, isPerfect: true, isMissed: true },
+    }),
+  ]);
+  const byUser = new Map<string, DayRecord[]>();
+  for (const r of rows) {
+    let list = byUser.get(r.userId);
+    if (!list) {
+      list = [];
+      byUser.set(r.userId, list);
+    }
+    list.push({
+      dayNumber: r.dayNumber,
+      junk: r.junk,
+      move: r.move,
+      study: r.study,
+      xp: r.xp,
+      isPerfect: r.isPerfect,
+      isMissed: r.isMissed,
+    });
+  }
+  const out = users.map((u) => {
+    const records = byUser.get(u.id) ?? [];
+    return {
+      user: { id: u.id, slug: u.slug, name: u.name, emoji: u.emoji, accent: u.accent },
+      stats: computeStats(records, currentDay),
+      rawDays: records,
+    };
+  });
   out.sort((a, b) => b.stats.totalXp - a.stats.totalXp);
   return out;
 }
@@ -150,12 +195,11 @@ export type FullDay = {
 };
 
 export async function getDashboardData(slug: string, currentDay: number) {
-  const user = await prisma.user.findUnique({ where: { slug } });
-  if (!user) return null;
-  const me = await loadUserWithStats(user, currentDay);
   const allUsers = await getAllUsersWithStats(currentDay);
+  const me = allUsers.find((u) => u.user.slug === slug);
+  if (!me) return null;
   const todayRow = await prisma.day.findUnique({
-    where: { userId_dayNumber: { userId: user.id, dayNumber: currentDay } },
+    where: { userId_dayNumber: { userId: me.user.id, dayNumber: currentDay } },
   });
   const ranks = new Map<string, number>();
   allUsers.forEach((u, i) => ranks.set(u.user.slug, i + 1));
