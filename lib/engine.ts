@@ -2,9 +2,9 @@ export const CHALLENGE = {
   title: "THE 100-DAY TRIO CHALLENGE",
   subtitle: "100 DAYS. 3 PEOPLE. ZERO EXCUSES.",
   participants: "LEKHANA × AKSHAYA × NANDHAN",
-  start: new Date(Date.UTC(2026, 8, 22)), // Sep 22, 2026
-  end: new Date(Date.UTC(2026, 11, 30)), // Dec 30, 2026 (day 100)
-  finale: new Date(Date.UTC(2026, 11, 31)), // Dec 31, 2026
+  start: new Date(Date.UTC(2026, 8, 23)), // Sep 23, 2026
+  end: new Date(Date.UTC(2026, 11, 31)), // Dec 31, 2026 (day 100)
+  finale: new Date(Date.UTC(2027, 0, 1)), // Jan 1, 2027
   days: 100,
   xpPerMission: 100,
   xpPerDay: 300,
@@ -15,13 +15,12 @@ export const DAY_MS = 24 * 60 * 60 * 1000;
 
 /** Real-timescale day number for a given date (1-based, clamped to 1..100). */
 export function dayNumberForDate(date: Date): number {
-  const startUtc = Date.UTC(2026, 8, 22);
   const targetUtc = Date.UTC(
     date.getUTCFullYear(),
     date.getUTCMonth(),
     date.getUTCDate(),
   );
-  const diff = Math.floor((targetUtc - startUtc) / DAY_MS);
+  const diff = Math.floor((targetUtc - CHALLENGE.start.getTime()) / DAY_MS);
   return clamp(Math.min(diff + 1, CHALLENGE.days), 1, CHALLENGE.days);
 }
 

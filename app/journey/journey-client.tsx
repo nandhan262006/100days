@@ -43,7 +43,7 @@ export function JourneyClient({ chapters, currentDay }: { chapters: JourneyChapt
           <p className="font-mono text-[11px] font-bold text-mist">{pct}% COMPLETE</p>
         </div>
         <ProgressBar value={currentDay} max={CHALLENGE.days} color="violet" />
-        <p className="mt-2 font-mono text-[10px] tracking-widest text-mist">SEP 22 → DEC 30 · FINALE DEC 31</p>
+        <p className="mt-2 font-mono text-[10px] tracking-widest text-mist">SEP 23 → DEC 31 · FINALE JAN 1</p>
       </Glass>
 
       <div className="timeline-rail relative space-y-4 pl-0 sm:space-y-5">

@@ -77,9 +77,9 @@ export default async function DashboardPage() {
         </div>
         <ProgressBar value={currentDay} max={CHALLENGE.days} color="violet" barClassName="shadow-[0_0_14px_rgba(167,139,250,0.5)]" />
         <div className="mt-2 flex justify-between font-mono text-[10px] font-bold tracking-widest text-mist">
-          <span>SEP 22</span>
+          <span>SEP 23</span>
           <span>{pct}% COMPLETE</span>
-          <span>DEC 30</span>
+          <span>DEC 31</span>
         </div>
       </Glass>
 
@@ -215,10 +215,10 @@ export default async function DashboardPage() {
       <div className="flex flex-col items-center gap-3 py-2 text-center sm:flex-row sm:justify-between">
         <div className="flex items-center gap-2 font-mono text-[10px] font-bold tracking-[0.2em] text-mist">
           <Logo size={22} />
-          <span>SEP 22 — DEC 30, 2026</span>
+          <span>SEP 23 — DEC 31, 2026</span>
           <span className="text-lime">·</span>
           <span>
-            FINALE <span className="text-orange">DEC 31</span>
+            FINALE <span className="text-orange">JAN 1</span>
           </span>
         </div>
         <p className="font-mono text-[10px] font-bold tracking-[0.24em] text-mist/70">

@@ -191,7 +191,7 @@ export function FinaleClient({
           WALK THE JOURNEY →
         </Link>
         <p className="font-mono text-[10px] font-bold tracking-[0.3em] text-mist/60">
-          SEP 22 — DEC 30 · NO DAY OFF
+          SEP 23 — DEC 31 · NO DAY OFF
         </p>
       </div>
     </div>

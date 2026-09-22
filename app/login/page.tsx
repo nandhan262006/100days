@@ -95,7 +95,7 @@ export default async function LoginPage({
         </div>
 
         <p className="mt-8 text-center font-mono text-[11px] font-bold tracking-[0.3em] text-mist/60">
-          SEP 22 — DEC 30, 2026 · FINALE DEC 31
+          SEP 23 — DEC 31, 2026 · FINALE JAN 1
         </p>
         <p className="mt-2 text-center text-[11px] leading-relaxed text-mist/50">
           A private game for the trio. Pick your name, enter your password.

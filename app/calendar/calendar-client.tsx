@@ -60,7 +60,7 @@ type WeekColumn = {
 };
 
 function buildWeekColumns(): WeekColumn[] {
-  const startTs = dateForDayNumber(1).getTime(); // Sep 22 2026 (Tuesday)
+  const startTs = dateForDayNumber(1).getTime(); // Sep 23 2026 (Wednesday)
   const startDow = new Date(startTs).getUTCDay();
   const gridStart = startTs - startDow * DAY_MS; // Sunday before day 1
   const weeks: WeekColumn[] = [];
