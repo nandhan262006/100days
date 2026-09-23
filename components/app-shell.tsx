@@ -405,7 +405,7 @@ function SwitchPasswordForm({
           onChange={(e) => onChange(e.target.value)}
           placeholder="••••••••"
           className={cn(
-            "w-full rounded-lg border bg-white/[0.06] px-2.5 py-1.5 text-sm text-frost outline-none placeholder:text-mist/60",
+            "w-full rounded-lg border bg-white/[0.06] px-2.5 py-1.5 text-base text-frost outline-none placeholder:text-mist/60 sm:text-sm",
             error ? "border-red-500/50" : "border-white/12 focus:border-lime/50",
           )}
         />
