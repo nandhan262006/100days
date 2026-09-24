@@ -53,6 +53,43 @@ export async function setActiveUser(slug: string, password: string): Promise<{ o
   return { ok: true };
 }
 
+export async function resetToday(): Promise<{ ok: boolean }> {
+  const profile = await getActiveProfile();
+  if (!profile) return { ok: false };
+
+  const currentDay = await getCurrentDay();
+  await prisma.day.updateMany({
+    where: { userId: profile.id, dayNumber: currentDay },
+    data: {
+      junk: false,
+      move: false,
+      study: false,
+      junkAt: null,
+      moveAt: null,
+      studyAt: null,
+      exerciseType: null,
+      exerciseMin: null,
+      steps: null,
+      subject: null,
+      studyMin: null,
+      learned: null,
+      xp: 0,
+      isPerfect: false,
+      isMissed: false,
+      submittedAt: null,
+    },
+  });
+
+  revalidatePath("/", "layout");
+  revalidatePath("/leaderboard");
+  revalidatePath("/achievements");
+  revalidatePath(`/person/${profile.slug}`);
+  revalidatePath("/battle");
+  revalidatePath("/calendar");
+  revalidatePath("/finale");
+  return { ok: true };
+}
+
 export async function clearActiveUser(): Promise<void> {
   const cookieStore = await cookies();
   cookieStore.delete(ACTIVE_USER_COOKIE);

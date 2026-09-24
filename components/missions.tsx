@@ -2,8 +2,8 @@
 
 import { useCallback, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Check, X } from "lucide-react";
-import { submitMission, type SubmitResult } from "@/app/actions";
+import { RotateCcw, Check, X } from "lucide-react";
+import { resetToday, submitMission, type SubmitResult } from "@/app/actions";
 import { EVENTS, bus } from "./bus";
 import { playMissionDone } from "@/lib/sfx";
 import { MISSIONS } from "@/lib/stats";
@@ -104,6 +104,23 @@ export function MissionGrid({
     [celebrate],
   );
 
+  const [resetting, setResetting] = useState(false);
+  const anyDecided = decided.junk || decided.move || decided.study;
+
+  const doReset = useCallback(async () => {
+    if (resetting) return;
+    if (!window.confirm("Reset today? All missions go back to undecided.")) return;
+    setResetting(true);
+    const r = await resetToday();
+    setResetting(false);
+    if (r.ok) {
+      decidedRef.current = { junk: false, move: false, study: false };
+      setDecided({ ...decidedRef.current });
+      setDay({ junk: false, move: false, study: false, xp: 0, isPerfect: false });
+      bus.emit(EVENTS.rankChange, { before: 0, after: 0 });
+    }
+  }, [resetting]);
+
   const missions = MISSIONS.map((m) => ({
     ...m,
     done: day[m.key],
@@ -121,9 +138,22 @@ export function MissionGrid({
             DAY {currentDay} · 300 XP AVAILABLE
           </p>
         </div>
-        <div className="flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 font-mono text-xs font-bold text-frost">
-          <span className="h-1.5 w-1.5 rounded-full bg-lime animate-pulse-glow" />
-          {day.xp}/300
+        <div className="flex items-center gap-2">
+          {anyDecided && (
+            <button
+              onClick={doReset}
+              disabled={resetting}
+              title="Reset today's missions"
+              className="flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 font-mono text-xs font-bold text-mist transition-colors hover:border-white/25 hover:text-frost disabled:opacity-50"
+            >
+              <RotateCcw className={cn("h-3.5 w-3.5", resetting && "animate-spin")} strokeWidth={2.5} />
+              RESET
+            </button>
+          )}
+          <div className="flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 font-mono text-xs font-bold text-frost">
+            <span className="h-1.5 w-1.5 rounded-full bg-lime animate-pulse-glow" />
+            {day.xp}/300
+          </div>
         </div>
       </div>
 
